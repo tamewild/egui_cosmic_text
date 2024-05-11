@@ -1,5 +1,7 @@
 # egui_cosmic_text
 
+[![](https://img.shields.io/crates/v/egui_cosmic_text.svg)](https://crates.io/crates/egui_cosmic_text)
+
 A work in progress library that adds text functionality to [egui](https://github.com/emilk/egui) based on [cosmic text](https://github.com/pop-os/cosmic-text.git), including an optional text widget, a texture atlas, and drawing utilities.
 
 ### Demo
