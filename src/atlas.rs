@@ -105,6 +105,7 @@ impl GlyphImage {
             .color_opt
             // Is this right?
             .map(|x| Color32::from_rgba_premultiplied(x.r(), x.g(), x.b(), x.a()));
+        // Note: this isn't exactly working
         let tint = match self.colorable {
             true => color_override.unwrap_or(self.default_color),
             false => Color32::WHITE
