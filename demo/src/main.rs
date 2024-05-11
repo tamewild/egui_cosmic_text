@@ -91,7 +91,7 @@ impl App for DemoApp {
                         ui.label("Note: pasting via context menu is not supported in this WASM demo.");
 
                         ui.centered_and_justified(|ui| {
-                            ui.hyperlink_to("Source code", "https://example.org/");
+                            ui.hyperlink_to("Source code", "https://github.com/tamewild/egui_cosmic_text/");
                         });
                     });
 
