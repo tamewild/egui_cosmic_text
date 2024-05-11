@@ -16,7 +16,7 @@ The widget, while optional, is included with the library by default.
 
 There are rough edges to it right now, which will hopefully get better over time.
 
-If you don't want to use the widget feature, you can use the library to draw text using cosmic text with the provided texture atlas (based on [glyphon](https://github.com/grovesNL/glyphon)). Drawing colored emojis, RTL, etc., is supported.
+If you don't want to use the widget feature, you can use the library to draw text using cosmic text with the provided texture atlas (based on [glyphon](https://github.com/grovesNL/glyphon)'s implementation). Drawing colored emojis, RTL, etc., is supported.
 
 #### Widget Features
 - Colored emojis
