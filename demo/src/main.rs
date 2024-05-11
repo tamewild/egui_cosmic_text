@@ -310,7 +310,7 @@ fn app_creator() -> AppCreator {
             .family(Family::Name("Ubuntu"))
             .weight(Weight::LIGHT);
         editor.set_text(
-            [(include_str!("../resources/text_box.txt"), attrs)],
+            [("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs)],
             attrs,
             Shaping::Advanced,
             &mut font_system,
