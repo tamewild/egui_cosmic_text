@@ -2,6 +2,9 @@
 name = "egui_cosmic_text"
 version = "0.1.0"
 edition = "2021"
+description = "Unofficial cosmic text widget and utilities for egui"
+license = "MIT"
+repository = "https://github.com/tamewild/egui_cosmic_text"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
