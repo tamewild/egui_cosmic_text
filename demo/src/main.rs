@@ -335,7 +335,10 @@ fn app_creator() -> AppCreator {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    eframe::run_native("demo", NativeOptions::default(), app_creator())
+    eframe::run_native("demo", NativeOptions {
+        follow_system_theme: false,
+        ..Default::default()
+    }, app_creator())
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -344,7 +347,10 @@ fn main() {
 
     wasm_bindgen_futures::spawn_local(async move {
         eframe::WebRunner::new()
-            .start("the_canvas_id", WebOptions::default(), app_creator())
+            .start("the_canvas_id", WebOptions {
+                follow_system_theme: false,
+                ..Default::default()
+            }, app_creator())
             .await
             .expect("Failed to launch app")
     })
