@@ -1,0 +1,28 @@
+[package]
+name = "egui_cosmic_text"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+egui = { version = "0.27.2", default-features = false }
+cosmic-text = "0.11.2"
+cosmic_undo_2 = { version = "0.2.0", default-features = false }
+etagere = "0.2.10"
+imgref = "1.10.1"
+lru = "0.12.3"
+
+[dev-dependencies]
+eframe = "0.27.2"
+rustc-hash = "1.1.0"
+arboard = "3.3.2"
+
+[features]
+default = ["widget"]
+widget = []
+shape-run-cache = ["cosmic-text/shape-run-cache"]
+
+[workspace]
+members = ["demo"]
+resolver = "2"
