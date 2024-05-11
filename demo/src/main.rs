@@ -209,7 +209,7 @@ impl App for DemoApp {
                         .show(
                             ui,
                             &mut self.common_mark_cache,
-                            include_str!("../../README.md")
+                            include_str!("../resources/README_mirror.md")
                         );
                 });
             });

@@ -2,12 +2,6 @@
 
 A work in progress library that adds text functionality to [egui](https://github.com/emilk/egui) based on [cosmic text](https://github.com/pop-os/cosmic-text.git), including an optional text widget, a texture atlas, and drawing utilities.
 
-### Demo
-
-[Click here to visit the web demo.](https://tamewild.github.io/egui_cosmic_text)
-
-[SCREENSHOT WILL BE HERE]
-
 ### Widget
 
 The widget, while optional, is included with the library by default.
