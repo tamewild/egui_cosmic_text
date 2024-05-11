@@ -6,7 +6,7 @@ A work in progress library that adds text functionality to [egui](https://github
 
 [Click here to visit the web demo.](https://tamewild.github.io/egui_cosmic_text)
 
-[SCREENSHOT WILL BE HERE]
+![](misc/img.png)
 
 ### Widget
 
