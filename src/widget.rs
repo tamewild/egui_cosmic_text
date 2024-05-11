@@ -416,8 +416,8 @@ fn apply_history_action_to_editor(action: cosmic_undo_2::Action<&Change>, editor
 
 #[derive(Debug, Default)]
 pub struct EditorActions {
-    scroll_to_cursor: bool,
-    focus: bool,
+    pub scroll_to_cursor: bool,
+    pub focus: bool,
 }
 
 pub trait ContextMenu {
