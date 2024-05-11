@@ -76,6 +76,23 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<(f32, f32)> {
     None
 }
 
+fn end_cursor(run: &LayoutRun) -> Option<Cursor> {
+    match run.rtl {
+        true => {
+            // |..
+            run.glyphs.first().map(|glyph| {
+                Cursor::new_with_affinity(run.line_i, glyph.start, Affinity::After)
+            })
+        }
+        false => {
+            // ..|
+            run.glyphs.last().map(|glyph| {
+                Cursor::new_with_affinity(run.line_i, glyph.end, Affinity::Before)
+            })
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct LineSelection {
     x_left: f32,
@@ -101,12 +118,15 @@ impl LineSelection {
                 }
             })
             .map(|(x_left, x_width)| {
-                let end_of_line = run.glyphs.last().map(|x| x.x + x.w).unwrap_or_default();
+                let end_of_line_included = match end_cursor(run) {
+                    None => true,
+                    Some(end_cursor) => end_cursor <= end
+                };
                 LineSelection {
                     x_left,
                     x_width,
                     line_top: run.line_top,
-                    end_of_line_included: x_left + x_width == end_of_line,
+                    end_of_line_included,
                 }
             })
     }
