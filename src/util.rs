@@ -6,19 +6,13 @@ use crate::cursor::LineSelection;
 
 /// Measures the maximum height of the runs that have been laid out.
 pub fn measure_height(buf: &Buffer) -> f32 {
-    let line_height = buf.metrics().line_height;
-    let layout_lines = buf
-        .lines
-        .iter()
-        .filter_map(|x| x.layout_opt().as_ref().map(|x| x.len()))
-        .sum::<usize>();
-    layout_lines as f32 * line_height
+    buf.layout_runs().map(|x| x.line_height).sum()
 }
 
 /// Measures the maximum width and maximum height of the runs that have been laid out.
 pub fn measure_width_and_height(buf: &Buffer) -> (f32, f32) {
     buf.layout_runs().fold((0.0, 0.0), |(width, height), x| {
-        (x.line_w.max(width), height + buf.metrics().line_height)
+        (x.line_w.max(width), height + x.line_height)
     })
 }
 
