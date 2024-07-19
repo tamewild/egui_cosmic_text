@@ -9,17 +9,17 @@ repository = "https://github.com/tamewild/egui_cosmic_text"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = { version = "0.27.2", default-features = false }
+egui = { version = "0.28", default-features = false }
 cosmic-text = "0.11.2"
 cosmic_undo_2 = { version = "0.2.0", default-features = false }
-etagere = "0.2.10"
+etagere = "0.2.13"
 imgref = "1.10.1"
 lru = "0.12.3"
 
 [dev-dependencies]
-eframe = "0.27.2"
-rustc-hash = "1.1.0"
-arboard = "3.3.2"
+eframe = "0.28.1"
+rustc-hash = "2.0.0"
+arboard = "3.4.0"
 
 [features]
 default = ["widget"]

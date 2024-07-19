@@ -316,7 +316,7 @@ fn app_creator() -> AppCreator {
             &mut font_system,
         );
 
-        Box::new(DemoApp {
+        Ok(Box::new(DemoApp {
             font_system,
             swash_cache,
             texture_atlas,
@@ -329,7 +329,7 @@ fn app_creator() -> AppCreator {
             selected_layout_mode: layout_mode,
             updated_max_texture_side: false,
             show_texture_atlas: false,
-        })
+        }))
     })
 }
 
