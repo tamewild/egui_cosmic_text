@@ -4,17 +4,17 @@ use cosmic_text::{Affinity, Buffer, Cursor, LayoutLine, LayoutRun};
 // I believe this happens in cosmic-edit too so it might be a cosmic-text bug.
 // The editor gets into a state where the cursor goes past all the glyphs. Presumably this is where the buffer should've wrapped.
 pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<(f32, f32)> {
-    let layout_lines_before = buf
+    let base_line_height = buf.metrics().line_height;
+
+    let height_before_cursor_line = buf
         .lines
         .iter()
         .enumerate()
         .take(cursor.line)
-        .filter_map(|(_, line)| line.layout_opt().as_ref().map(|x| x.len()))
-        .sum::<usize>();
-
-    let line_height = buf.metrics().line_height;
-
-    let height_before_cursor_line = layout_lines_before as f32 * line_height;
+        .filter_map(|(_, line)| line.layout_opt().as_ref())
+        .flatten()
+        .map(|x| x.line_height_opt.unwrap_or(base_line_height))
+        .sum();
 
     if cursor.index == 0 {
         return Some((0.0, height_before_cursor_line));
@@ -23,12 +23,12 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<(f32, f32)> {
     let line = buf.lines.get(cursor.line)?;
     let layout_lines_vec = line.layout_opt().as_ref()?;
 
-    let layout_lines = layout_lines_vec.iter().enumerate();
-
     let mut last_line = None::<(&LayoutLine, f32)>;
 
+    let mut line_top = height_before_cursor_line;
+
     // https://github.com/iced-rs/iced/blob/dd249a1d11c68b8fee1828d58bae158946ee2ebd/graphics/src/text/editor.rs#L176
-    for (i, layout_line) in layout_lines {
+    for layout_line in layout_lines_vec.iter() {
         let start = layout_line
             .glyphs
             .first()
@@ -43,8 +43,6 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<(f32, f32)> {
             Affinity::After => cursor.index < end,
         };
 
-        let line_top = height_before_cursor_line + (i as f32 * line_height);
-
         if is_cursor_before_start {
             return last_line.map(|(line, line_top)| (line.w, line_top));
         } else if is_cursor_before_end {
@@ -58,17 +56,18 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<(f32, f32)> {
         }
 
         last_line = Some((layout_line, line_top));
+
+        line_top += layout_line.line_height_opt.unwrap_or(base_line_height);
     }
 
     let last_glyph = layout_lines_vec.last().and_then(|x| x.glyphs.last());
     if let Some(last_glyph) = last_glyph {
         let last_glyph_index = last_glyph.end;
         if last_glyph_index == cursor.index {
-            let last_layout_line_i = layout_lines_vec.len() - 1;
-            let height_offset = last_layout_line_i as f32 * line_height;
+            let (_, line_top) = last_line?;
             return Some((
                 last_glyph.x + last_glyph.w,
-                height_before_cursor_line + height_offset,
+                line_top,
             ));
         }
     }

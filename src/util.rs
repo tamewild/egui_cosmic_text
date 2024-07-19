@@ -30,7 +30,8 @@ pub fn measure_width_and_height(buf: &Buffer) -> (f32, f32) {
 /// Attempts to retrieve the cursor's rect from inside the buffer.
 /// This has to be translated to the widget's rect and is relative to the buffer, starting from `0.0, 0.0`
 pub fn cursor_rect(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
-    cursor::new_cursor_pos(buf, cursor)
+    cursor::cursor_pos(buf, cursor)
+        .map(|(x, y)| Rect::from_min_size(pos2(x, y), vec2(1.0, buf.metrics().line_height)))
 }
 
 pub fn extra_width(line_height: f32) -> f32 {
