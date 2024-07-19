@@ -108,7 +108,7 @@ pub struct PureBoundingBox(Option<Vec2>);
 impl LayoutMode for PureBoundingBox {
     fn calculate(&mut self, buf: &mut Buffer, font_system: &mut FontSystem, _: Vec2) -> Vec2 {
         let sz = self.0.get_or_insert_with(|| {
-            buf.set_size(font_system, f32::MAX, f32::MAX);
+            buf.set_size(font_system, None, None);
             measure_width_and_height(buf).into()
         });
         *sz
@@ -134,7 +134,7 @@ impl LayoutMode for FillWidth {
     ) -> Vec2 {
         if self.curr_width != available_size.x {
             self.curr_width = available_size.x;
-            buf.set_size(font_system, self.curr_width, f32::MAX);
+            buf.set_size(font_system, self.curr_width.into(), None);
             self.height = measure_height(buf);
         }
         vec2(self.curr_width, self.height)
@@ -181,7 +181,7 @@ impl LayoutMode for ShrinkToFit {
     ) -> Vec2 {
         if self.available_width != available_size.x {
             self.available_width = available_size.x;
-            buf.set_size(font_system, self.available_width, f32::MAX);
+            buf.set_size(font_system, self.available_width.into(), None);
             let (width, height) = measure_width_and_height(buf);
             self.width = width;
             self.height = height;
