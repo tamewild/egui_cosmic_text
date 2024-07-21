@@ -108,8 +108,7 @@ impl LineSelection {
                 // it's within the selection.
                 // Affinity messes up with 0 indexes sometimes
                 let buffer_line_range = start.line..=end.line;
-                if (run.glyphs.is_empty() || end.index == 0)
-                    && buffer_line_range.contains(&run.line_i)
+                if run.glyphs.is_empty() && buffer_line_range.contains(&run.line_i)
                 {
                     (0.0, 0.0).into()
                 } else {
