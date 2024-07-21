@@ -22,10 +22,14 @@ pub fn draw_buf<H>(
     mut draw_line_highlight: impl FnMut(H, bool, &mut Painter),
     mut draw_run: impl FnMut(&LayoutRun, &mut Painter),
 ) {
-    let line_height = buf.metrics().line_height;
     let visible_y_range = clip_rect.y_range();
     let line_y_range =
-        move |line_top: f32| Rangef::new(min_pos.y + line_top, min_pos.y + line_top + line_height);
+        |run: &LayoutRun| {
+            Rangef::new(
+                min_pos.y + run.line_top,
+                min_pos.y + run.line_top + run.line_height
+            )
+        };
     let selection_end_cursor_rect = selection_end
         .and_then(|x| cursor_rect(buf, x))
         .map(|rect| rect.translate(min_pos.to_vec2()));
@@ -33,14 +37,14 @@ pub fn draw_buf<H>(
     let mut hovered_already = false;
     let mut layout_run_iter = buf
         .layout_runs()
-        .skip_while(move |x| !visible_y_range.intersects(line_y_range(x.line_top)))
+        .skip_while(move |x| !visible_y_range.intersects(line_y_range(x)))
         .take_while(move |x| {
-            let line_y_range = line_y_range(x.line_top);
+            let line_y_range = line_y_range(x);
             visible_y_range.intersects(line_y_range)
         })
         .peekable();
     while let Some(run) = layout_run_iter.next() {
-        let line_y_range = line_y_range(run.line_top);
+        let line_y_range = line_y_range(&run);
 
         if let Some(hover_pos) = hover_pos {
             if !hovered_already {
