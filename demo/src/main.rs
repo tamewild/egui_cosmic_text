@@ -22,7 +22,7 @@ use log::LevelFilter;
 use rustc_hash::FxHasher;
 
 use egui_cosmic_text::atlas::TextureAtlas;
-use egui_cosmic_text::cosmic_text::{Attrs, Family, FontSystem, Shaping, SwashCache, Weight};
+use egui_cosmic_text::cosmic_text::{Attrs, Family, FontSystem, Metrics, Shaping, SwashCache, Weight};
 use egui_cosmic_text::cosmic_text::fontdb::Source;
 use egui_cosmic_text::widget::{
     CosmicEdit, DefaultContextMenu, FillWidth, FillWidthAndHeight, HoverStrategy, Interactivity,
@@ -310,7 +310,10 @@ fn app_creator() -> AppCreator {
             .family(Family::Name("Ubuntu"))
             .weight(Weight::LIGHT);
         editor.set_text(
-            [("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs)],
+            [
+                ("egui_cosmic_text 0.2.0\n", attrs.metrics(Metrics::new(28.0, 14.0 * 3.0))),
+                ("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs)
+            ],
             attrs,
             Shaping::Advanced,
             &mut font_system,
