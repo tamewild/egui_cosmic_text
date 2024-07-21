@@ -979,7 +979,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 || ui.ctx().set_cursor_icon(CursorIcon::Text),
                 |run| selection_bounds.and_then(|bounds| LineSelection::new(run, bounds)),
                 |selection, last, painter| {
-                    let rect = selection_rect(selection, line_height, last)
+                    let rect = selection_rect(selection, last)
                         .translate(resp.rect.min.to_vec2());
                     self.selection_texture
                         .with_texture(ui.ctx(), line_height, |texture| {

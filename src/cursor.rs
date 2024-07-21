@@ -114,6 +114,7 @@ pub struct LineSelection {
     x_left: f32,
     x_width: f32,
     line_top: f32,
+    line_height: f32,
     end_of_line_included: bool,
 }
 
@@ -141,6 +142,7 @@ impl LineSelection {
                     x_left,
                     x_width,
                     line_top: run.line_top,
+                    line_height: run.line_height,
                     end_of_line_included,
                 }
             })
@@ -156,5 +158,9 @@ impl LineSelection {
 
     pub fn line_top(&self) -> f32 {
         self.line_top
+    }
+
+    pub fn line_height(&self) -> f32 {
+        self.line_height
     }
 }

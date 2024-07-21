@@ -38,14 +38,14 @@ pub fn extra_width(line_height: f32) -> f32 {
     line_height / 2.0
 }
 
-pub fn selection_rect(line_selection: LineSelection, line_height: f32, last: bool) -> Rect {
-    let extra_width = extra_width(line_height);
+pub fn selection_rect(line_selection: LineSelection, last: bool) -> Rect {
+    let extra_width = extra_width(line_selection.line_height());
     let (x_left, mut x_width) = line_selection.x_left_and_width();
     if !last && line_selection.end_of_line_included() {
         x_width += extra_width;
     }
     Rect::from_min_size(
         pos2(x_left, line_selection.line_top()),
-        vec2(x_width, line_height),
+        vec2(x_width, line_selection.line_height()),
     )
 }
