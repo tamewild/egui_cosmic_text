@@ -690,28 +690,37 @@ impl<L: LayoutMode> CosmicEdit<L> {
     ) -> Response {
         self.frame_changed = false;
 
-        let line_height = self.line_height();
+        let base_line_height = self.line_height();
 
         let size = self.editor.with_buffer_mut(|x| {
             let (available_width, available_height) = ui.available_size_before_wrap().into();
             // If you encounter any issues with this, please let me know!
             let should_add_extra_width = (|| {
                 let mut layout_runs = x.layout_runs();
-                let first_line_width = layout_runs.next().map(|x| x.line_w)?;
-                let second_line_width = layout_runs.next().map(|x| x.line_w)?;
+
+                let first_line = layout_runs.next()?;
+                let second_line = layout_runs.next()?;
+
+                let first_line_width = first_line.line_w;
+                let second_line_width = second_line.line_w;
+
                 let combined_width = first_line_width + second_line_width;
+
                 let next = layout_runs.next().is_some();
+
                 if !next && combined_width <= available_width {
-                    return None::<()>;
+                    return None;
                 }
-                Some(())
-            })()
-            .is_some();
-            let extra_width = if should_add_extra_width {
+
+                Some(first_line.line_height.max(second_line.line_height))
+            })();
+
+            let extra_width = if let Some(line_height) = should_add_extra_width {
                 extra_width(line_height)
             } else {
                 0.0
             };
+
             let available_size = vec2(available_width - extra_width, available_height);
             let sz = self.layout_mode.calculate(x, font_system, available_size);
             (sz.x + extra_width, sz.y)
@@ -982,7 +991,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
                     let rect = selection_rect(selection, last)
                         .translate(resp.rect.min.to_vec2());
                     self.selection_texture
-                        .with_texture(ui.ctx(), line_height, |texture| {
+                        .with_texture(ui.ctx(), base_line_height, |texture| {
                             painter.image(
                                 texture.id(),
                                 rect,
