@@ -88,6 +88,7 @@ impl Interactivity {
 }
 
 pub trait LayoutMode {
+    /// Available size is in **physical pixels**
     fn calculate(
         &mut self,
         buf: &mut Buffer,
@@ -337,8 +338,11 @@ impl ClickType {
         }
     }
 
-    fn as_action(self, pos: Pos2) -> Action {
-        let [x, y]: [i32; 2] = <[f32; 2]>::from(pos).map(|x| x as i32);
+    /// Takes a logical position
+    fn as_action(self, pos: Pos2, pixels_per_point: f32) -> Action {
+        // logical -> physical
+        let Pos2 { x, y } = (pos * pixels_per_point).round();
+        let [x, y] = [x as i32, y as i32];
         match self {
             ClickType::Single => Action::Click { x, y },
             ClickType::Double => Action::DoubleClick { x, y },
@@ -690,10 +694,17 @@ impl<L: LayoutMode> CosmicEdit<L> {
     ) -> Response {
         self.frame_changed = false;
 
+        let pixels_per_point = ui.ctx().pixels_per_point();
+
         let base_line_height = self.line_height();
 
+        // In physical pixels
         let size = self.editor.with_buffer_mut(|x| {
-            let (available_width, available_height) = ui.available_size_before_wrap().into();
+            // egui logical pixel -> physical pixel
+            let (available_width, available_height) =
+                (ui.available_size_before_wrap() * pixels_per_point)
+                    .into();
+
             // If you encounter any issues with this, please let me know!
             let should_add_extra_width = (|| {
                 let mut layout_runs = x.layout_runs();
@@ -726,7 +737,11 @@ impl<L: LayoutMode> CosmicEdit<L> {
             (sz.x + extra_width, sz.y)
         });
 
-        let (resp, mut painter) = ui.allocate_painter(size.into(), self.interactivity.sense());
+        let (resp, mut painter) = ui.allocate_painter(
+            // Size is in physical pixels -> logical pixels
+            Vec2::from(size) / pixels_per_point,
+            self.interactivity.sense()
+        );
 
         let interact_pos = || {
             resp.interact_pointer_pos()
@@ -767,7 +782,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 self.change(font_system, |font_system, widget| {
                     widget
                         .editor
-                        .action(font_system, click_type.as_action(interact_pos));
+                        .action(font_system, click_type.as_action(interact_pos, pixels_per_point));
                 });
 
                 self.blink_state.cursor_visible = true;
@@ -785,11 +800,13 @@ impl<L: LayoutMode> CosmicEdit<L> {
 
                 if is_actual_drag {
                     self.change(font_system, |font_system, widget| {
+                        let physical_interact_pos = (interact_pos * pixels_per_point).round();
+
                         widget.editor.action(
                             font_system,
                             Action::Drag {
-                                x: interact_pos.x as i32,
-                                y: interact_pos.y as i32,
+                                x: physical_interact_pos.x as i32,
+                                y: physical_interact_pos.y as i32,
                             },
                         );
                     });
@@ -933,10 +950,10 @@ impl<L: LayoutMode> CosmicEdit<L> {
         self.editor.shape_as_needed(font_system, false);
 
         if should_scroll_to_cursor {
-            ui.scroll_to_rect(self.cursor_rect(resp.rect.min), None);
+            ui.scroll_to_rect(self.cursor_rect(resp.rect.min, pixels_per_point), None);
             self.scroll_state = ScrollState::Scrolling;
         } else if let ScrollState::Scrolling = self.scroll_state {
-            let rect = self.cursor_rect(resp.rect.min);
+            let rect = self.cursor_rect(resp.rect.min, pixels_per_point);
             // This can be borked if the cursor is larger than the view, infinitely scrolling to
             // the cursor even though it's visible, though not completely.
             if ui.clip_rect().contains_rect(rect) {
@@ -950,7 +967,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
         } else if let ScrollState::FinishedLastFrame = self.scroll_state {
             match resp.has_focus() {
                 true => {
-                    let rect = self.cursor_rect(resp.rect.min);
+                    let rect = self.cursor_rect(resp.rect.min, pixels_per_point);
                     if ui.clip_rect().contains_rect(rect) {
                         self.scroll_state = ScrollState::Idle
                     } else {
@@ -1010,7 +1027,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             self.blink_state.update(ui.ctx(), self.changed_this_frame());
 
             if self.blink_state.cursor_visible() {
-                self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min);
+                self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
             }
         }
 
@@ -1157,16 +1174,26 @@ impl<L: LayoutMode> CosmicEdit<L> {
         self.frame_changed
     }
 
-    pub fn cursor_rect(&self, min_pos: Pos2) -> Rect {
+    /// Returns the cursor rect in **logical pixels**
+    pub fn cursor_rect(&self, logical_min_pos: Pos2, pixels_per_point: f32) -> Rect {
         let cursor = self.editor.cursor();
         self.editor
-            .with_buffer(|x| cursor_rect(x, cursor).unwrap().translate(min_pos.to_vec2()))
+            .with_buffer(|x| {
+                (cursor_rect(x, cursor).unwrap() / pixels_per_point)
+                    .translate(logical_min_pos.to_vec2())
+            })
     }
 
-    fn draw_cursor(&mut self, ctx: &egui::Context, painter: &mut Painter, min_pos: Pos2) {
+    fn draw_cursor(
+        &mut self,
+        ctx: &egui::Context,
+        painter: &mut Painter,
+        logical_min_pos: Pos2,
+        pixels_per_point: f32
+    ) {
         // Probably shouldn't render the cursor if it isn't in view.
         // Shouldn't matter much, it'll be clipped, etc.
-        let cursor_rect = painter.round_rect_to_pixels(self.cursor_rect(min_pos));
+        let cursor_rect = painter.round_rect_to_pixels(self.cursor_rect(logical_min_pos, pixels_per_point));
         self.cursor_style
             .with_texture(ctx, self.line_height(), |cursor_texture| {
                 let cursor_texture_id = cursor_texture.texture_id();
