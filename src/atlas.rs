@@ -127,6 +127,7 @@ impl GlyphImage {
     }
 }
 
+/// **The atlas is in physical pixels**
 pub struct TextureAtlas<S: BuildHasher + Default = RandomState> {
     packer: BucketedAtlasAllocator,
     cache: LruCache<CacheKey, Option<GlyphState>, S>,

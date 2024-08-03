@@ -9,6 +9,11 @@ enum PeekedLine<H> {
     End,
 }
 
+/// Draws a buffer.
+///
+/// `min_pos`, `clip_rect`, `hover_pos` is expected to be in **logical pixels**
+///
+/// `measure_hover_box_width` is expected to be in *physical pixels*
 pub fn draw_buf<H>(
     buf: &Buffer,
     min_pos: Pos2,
@@ -22,19 +27,28 @@ pub fn draw_buf<H>(
     mut draw_line_highlight: impl FnMut(H, bool, &mut Painter),
     mut draw_run: impl FnMut(&LayoutRun, &mut Painter),
 ) {
+    let pixels_per_point = painter.ctx().pixels_per_point();
+
     let visible_y_range = clip_rect.y_range();
+
     let line_y_range =
         |run: &LayoutRun| {
             Rangef::new(
-                min_pos.y + run.line_top,
-                min_pos.y + run.line_top + run.line_height
+                min_pos.y + (run.line_top / pixels_per_point),
+                min_pos.y + ((run.line_top + run.line_height) / pixels_per_point)
             )
         };
+
     let selection_end_cursor_rect = selection_end
         .and_then(|x| cursor_rect(buf, x))
+        // convert from physical pixels to logical points
+        .map(|x| x / pixels_per_point)
         .map(|rect| rect.translate(min_pos.to_vec2()));
+
     let mut peeked_highlighted_line: PeekedLine<H> = PeekedLine::Peeked(None);
+
     let mut hovered_already = false;
+
     let mut layout_run_iter = buf
         .layout_runs()
         .skip_while(move |x| !visible_y_range.intersects(line_y_range(x)))
@@ -43,6 +57,7 @@ pub fn draw_buf<H>(
             visible_y_range.intersects(line_y_range)
         })
         .peekable();
+
     while let Some(run) = layout_run_iter.next() {
         let line_y_range = line_y_range(&run);
 
@@ -51,7 +66,7 @@ pub fn draw_buf<H>(
                 let hover_box_width = measure_hover_box_width(run.glyphs);
                 if let Some(hover_box_width) = hover_box_width {
                     let bounding_box = Rect::from_x_y_ranges(
-                        min_pos.x..=min_pos.x + hover_box_width,
+                        min_pos.x..=min_pos.x + (hover_box_width / pixels_per_point),
                         line_y_range,
                     );
                     let hover = bounding_box.contains(hover_pos);
@@ -86,6 +101,7 @@ pub fn draw_buf<H>(
     }
 }
 
+/// `rect` is expected to be in **logical pixels**
 pub fn draw_run<S: BuildHasher + Default>(
     layout_run: &LayoutRun,
     font_system: &mut FontSystem,

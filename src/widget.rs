@@ -705,36 +705,8 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 (ui.available_size_before_wrap() * pixels_per_point)
                     .into();
 
-            // If you encounter any issues with this, please let me know!
-            let should_add_extra_width = (|| {
-                let mut layout_runs = x.layout_runs();
-
-                let first_line = layout_runs.next()?;
-                let second_line = layout_runs.next()?;
-
-                let first_line_width = first_line.line_w;
-                let second_line_width = second_line.line_w;
-
-                let combined_width = first_line_width + second_line_width;
-
-                let next = layout_runs.next().is_some();
-
-                if !next && combined_width <= available_width {
-                    return None;
-                }
-
-                Some(first_line.line_height.max(second_line.line_height))
-            })();
-
-            let extra_width = if let Some(line_height) = should_add_extra_width {
-                extra_width(line_height)
-            } else {
-                0.0
-            };
-
-            let available_size = vec2(available_width - extra_width, available_height);
-            let sz = self.layout_mode.calculate(x, font_system, available_size);
-            (sz.x + extra_width, sz.y)
+            let sz = self.layout_mode.calculate(x, font_system, vec2(available_width, available_height));
+            (sz.x, sz.y)
         });
 
         let (resp, mut painter) = ui.allocate_painter(
@@ -1005,7 +977,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 || ui.ctx().set_cursor_icon(CursorIcon::Text),
                 |run| selection_bounds.and_then(|bounds| LineSelection::new(run, bounds)),
                 |selection, last, painter| {
-                    let rect = selection_rect(selection, last)
+                    let rect = (selection_rect(selection, last) / pixels_per_point)
                         .translate(resp.rect.min.to_vec2());
                     self.selection_texture
                         .with_texture(ui.ctx(), base_line_height, |texture| {

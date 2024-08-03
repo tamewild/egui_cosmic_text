@@ -4,7 +4,7 @@ use egui::{pos2, Rect, vec2};
 // There's an issue here where if the first line is only spaces, it can get to a certain point where the cursor is invalid.
 // I believe this happens in cosmic-edit too so it might be a cosmic-text bug.
 // The editor gets into a state where the cursor goes past all the glyphs. Presumably this is where the buffer should've wrapped.
-/// In **physical** pixels.
+/// **In physical pixels.**
 pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
     let base_line_height = buf.metrics().line_height;
 
@@ -153,14 +153,17 @@ impl LineSelection {
         self.end_of_line_included
     }
 
+    /// In **physical pixels**
     pub fn x_left_and_width(&self) -> (f32, f32) {
         (self.x_left, self.x_width)
     }
 
+    /// In **physical pixels**
     pub fn line_top(&self) -> f32 {
         self.line_top
     }
 
+    /// In **physical pixels**
     pub fn line_height(&self) -> f32 {
         self.line_height
     }
