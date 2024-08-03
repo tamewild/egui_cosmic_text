@@ -294,8 +294,6 @@ fn app_creator() -> AppCreator {
         cc.egui_ctx
             .style_mut(|s| s.interaction.selectable_labels = false);
 
-        cc.egui_ctx.set_zoom_factor(2.0);
-
         let texture_atlas = TextureAtlas::new(cc.egui_ctx.clone(), Color32::WHITE);
 
         let layout_mode = SelectedLayoutMode::FillWidthAndHeight;
