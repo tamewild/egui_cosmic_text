@@ -535,56 +535,6 @@ enum ScrollState {
     FinishedLastFrame,
 }
 
-struct BlinkState {
-    deadline: Option<f64>,
-    cursor_visible: bool,
-}
-
-impl BlinkState {
-    const BLINK_RATE: f64 = 0.503;
-
-    fn new() -> Self {
-        Self {
-            deadline: None,
-            cursor_visible: true,
-        }
-    }
-
-    fn reset_time(time: f64) -> f64 {
-        time + Self::BLINK_RATE
-    }
-
-    fn reset(&mut self, ctx: &egui::Context) {
-        let time = Self::reset_time(ctx.input(|i| i.time));
-        self.deadline = Some(time);
-    }
-
-    fn update(&mut self, ctx: &egui::Context, changed: bool) {
-        let time = ctx.input(|i| i.time);
-
-        if changed {
-            self.cursor_visible = true;
-            self.reset(ctx);
-            return;
-        }
-
-        match self.deadline {
-            None => self.reset(ctx),
-            Some(deadline) if time >= deadline => {
-                self.cursor_visible = !self.cursor_visible;
-                self.reset(ctx);
-            }
-            _ => {}
-        }
-
-        ctx.request_repaint_after(Duration::from_secs_f64(Self::BLINK_RATE));
-    }
-
-    fn cursor_visible(&self) -> bool {
-        self.cursor_visible
-    }
-}
-
 pub struct CosmicEdit<L: LayoutMode> {
     editor: Editor<'static>,
     interactivity: Interactivity,
@@ -595,7 +545,6 @@ pub struct CosmicEdit<L: LayoutMode> {
     commands: Commands<Change>,
     last_click: Option<LastClick>,
     scroll_state: ScrollState,
-    blink_state: BlinkState,
     dragging: bool,
     frame_changed: bool,
 }
@@ -627,7 +576,6 @@ impl<L: LayoutMode> CosmicEdit<L> {
             commands: Commands::new(),
             last_click: None,
             scroll_state: ScrollState::Idle,
-            blink_state: BlinkState::new(),
             dragging: false,
             frame_changed: false,
         }
@@ -649,7 +597,6 @@ impl<L: LayoutMode> CosmicEdit<L> {
             commands: Commands::new(),
             last_click: None,
             scroll_state: ScrollState::Idle,
-            blink_state: BlinkState::new(),
             dragging: false,
             frame_changed: false,
         }
@@ -757,9 +704,6 @@ impl<L: LayoutMode> CosmicEdit<L> {
                         .action(font_system, click_type.as_action(interact_pos, pixels_per_point));
                 });
 
-                self.blink_state.cursor_visible = true;
-                self.blink_state.reset(ui.ctx());
-
                 self.dragging = true;
             } else if self.dragging && resp.has_focus() && resp.hovered() {
                 let interact_pos = interact_pos().unwrap();
@@ -782,9 +726,6 @@ impl<L: LayoutMode> CosmicEdit<L> {
                             },
                         );
                     });
-
-                    self.blink_state.cursor_visible = true;
-                    self.blink_state.reset(ui.ctx());
                 }
             }
         }
@@ -865,9 +806,6 @@ impl<L: LayoutMode> CosmicEdit<L> {
                                     widget.invalidate_layout();
                                 } else {
                                     if let Action::Motion(_) = action {
-                                        widget.blink_state.cursor_visible = true;
-                                        widget.blink_state.reset(ui.ctx());
-
                                         match widget.editor.selection() {
                                             Selection::None if modifiers.shift => {
                                                 widget.editor.set_selection(Selection::Normal(
@@ -996,11 +934,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
         });
 
         if self.interactivity.input() && resp.has_focus() {
-            self.blink_state.update(ui.ctx(), self.changed_this_frame());
-
-            if self.blink_state.cursor_visible() {
-                self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
-            }
+            self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
         }
 
         resp
