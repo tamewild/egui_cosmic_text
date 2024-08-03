@@ -12,6 +12,8 @@ pub fn layout_lines_iter(buf: &Buffer) -> impl Iterator<Item = &LayoutLine> {
 }
 
 /// Measures the maximum height of the runs that have been laid out.
+///
+/// **This is in physical pixels.**
 pub fn measure_height(buf: &Buffer) -> f32 {
     layout_lines_iter(buf)
         .map(|x| x.line_height_opt.unwrap_or(buf.metrics().line_height))
@@ -19,6 +21,8 @@ pub fn measure_height(buf: &Buffer) -> f32 {
 }
 
 /// Measures the maximum width and maximum height of the runs that have been laid out.
+///
+/// **This is in physical pixels.**
 pub fn measure_width_and_height(buf: &Buffer) -> (f32, f32) {
     let base_line_height = buf.metrics().line_height;
     layout_lines_iter(buf)
@@ -29,15 +33,19 @@ pub fn measure_width_and_height(buf: &Buffer) -> (f32, f32) {
 
 /// Attempts to retrieve the cursor's rect from inside the buffer.
 /// This has to be translated to the widget's rect and is relative to the buffer, starting from `0.0, 0.0`
+///
+/// **This is in physical pixels.**
 pub fn cursor_rect(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
     cursor::cursor_pos(buf, cursor)
 }
 
+/// **This is in physical pixels.**
 pub fn extra_width(line_height: f32) -> f32 {
     // https://github.com/emilk/egui/blob/b8048572e8cc47ef9410b3516456da2a320fcdd2/crates/egui/src/text_selection/visuals.rs#L36
     line_height / 2.0
 }
 
+/// **This is in physical pixels.**
 pub fn selection_rect(line_selection: LineSelection, last: bool) -> Rect {
     let extra_width = extra_width(line_selection.line_height());
     let (x_left, mut x_width) = line_selection.x_left_and_width();
