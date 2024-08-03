@@ -101,18 +101,26 @@ impl GlyphImage {
     ) {
         let x = physical_glyph.x + self.left;
         let y = run.line_y as i32 + physical_glyph.y - self.top;
+
         let color_override = layout_glyph
             .color_opt
             // Is this right?
             .map(|x| Color32::from_rgba_premultiplied(x.r(), x.g(), x.b(), x.a()));
+
         // Note: this isn't exactly working
         let tint = match self.colorable {
             true => color_override.unwrap_or(self.default_color),
             false => Color32::WHITE
         };
+
+        let pixels_per_point = painter.ctx().pixels_per_point();
+
         painter.image(
             self.atlas_texture_id,
-            Rect::from_min_size(pos2(x as f32, y as f32), vec2(self.width, self.height)),
+            Rect::from_min_size(
+                pos2(x as f32, y as f32),
+                vec2(self.width, self.height)
+            ) / pixels_per_point, // Convert from physical -> logical
             self.uv_rect,
             tint
         );

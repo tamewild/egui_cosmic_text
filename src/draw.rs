@@ -94,8 +94,11 @@ pub fn draw_run<S: BuildHasher + Default>(
     painter: &mut Painter,
     rect: Rect,
 ) {
+    let pixels_per_point = painter.ctx().pixels_per_point();
+
     layout_run.glyphs.iter().for_each(|glyph| {
-        let physical_glyph = glyph.physical(rect.min.into(), 1.0);
+        // convert from logical pixels to physical pixels
+        let physical_glyph = glyph.physical((rect.min * pixels_per_point).into(), 1.0);
         if let Some(glyph_img) = atlas.alloc(physical_glyph.cache_key, font_system, swash_cache) {
             glyph_img.paint(glyph, physical_glyph, layout_run, painter)
         }
