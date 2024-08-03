@@ -349,12 +349,29 @@ fn main() {
     _ = eframe::WebLogger::init(LevelFilter::Debug);
 
     wasm_bindgen_futures::spawn_local(async move {
-        eframe::WebRunner::new()
+        let start_result = eframe::WebRunner::new()
             .start("the_canvas_id", WebOptions {
                 follow_system_theme: false,
                 ..Default::default()
             }, app_creator())
-            .await
-            .expect("Failed to launch app")
+            .await;
+
+        // Remove the loading text and spinner:
+        let loading_text = eframe::web_sys::window()
+            .and_then(|w| w.document())
+            .and_then(|d| d.get_element_by_id("loading_text"));
+        if let Some(loading_text) = loading_text {
+            match start_result {
+                Ok(_) => {
+                    loading_text.remove();
+                }
+                Err(e) => {
+                    loading_text.set_inner_html(
+                        "<p> The app has crashed. See the developer console for details. </p>",
+                    );
+                    panic!("Failed to start eframe: {e:?}");
+                }
+            }
+        }
     })
 }
