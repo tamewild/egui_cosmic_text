@@ -1,5 +1,4 @@
 use std::hash::BuildHasher;
-use std::time::Duration;
 
 use cosmic_text::{
     Action, Attrs, Buffer, Change, Cursor, Edit, Editor, FontSystem, LayoutGlyph, Metrics, Motion,

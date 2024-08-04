@@ -16,7 +16,6 @@ use eframe::epaint::FontFamily;
 use eframe::NativeOptions;
 #[cfg(target_arch = "wasm32")]
 use eframe::WebOptions;
-use egui_commonmark::{Alert, AlertBundle, CommonMarkCache, CommonMarkViewer};
 #[cfg(target_arch = "wasm32")]
 use log::LevelFilter;
 use rustc_hash::FxHasher;
@@ -54,7 +53,6 @@ struct DemoApp {
     swash_cache: SwashCache,
     texture_atlas: TextureAtlas<BuildHasherDefault<FxHasher>>,
     editor: CosmicEdit<Box<dyn LayoutMode>>,
-    common_mark_cache: CommonMarkCache,
     #[cfg(not(target_arch = "wasm32"))]
     clipboard: Clipboard,
     font_size: f32,
@@ -74,144 +72,98 @@ impl App for DemoApp {
         let mut curr_layout_mode = self.selected_layout_mode;
 
         SidePanel::left("side_bar")
-            .min_width(184.0)
             .resizable(false)
             .show(ctx, |ui| {
-                TopBottomPanel::bottom("note")
-                    .frame(Frame::none().inner_margin(Margin {
-                        left: 0.0,
-                        right: 0.0,
-                        top: 5.0,
-                        bottom: 0.0,
-                    }))
-                    .show_inside(ui, |ui| {
-                        ui.label("Note: the text rendered in this panel and the above panels aren't using this library.");
+                ui.label(WidgetText::from("Controls").heading().strong());
 
-                        #[cfg(target_arch = "wasm32")]
-                        ui.label("Note: pasting via context menu is not supported in this WASM demo.");
+                let button_text = match self.show_texture_atlas {
+                    true => "Hide Texture Atlas",
+                    false => "Show Texture Atlas"
+                };
 
-                        ui.centered_and_justified(|ui| {
-                            ui.hyperlink_to("Source code", "https://github.com/tamewild/egui_cosmic_text/");
-                        });
-                    });
+                if ui.button(button_text).clicked() {
+                    self.show_texture_atlas = !self.show_texture_atlas;
+                }
 
-                TopBottomPanel::bottom("controls")
-                    .frame(Frame::none().inner_margin(Margin {
-                        left: 0.0,
-                        right: 0.0,
-                        top: 5.0,
-                        bottom: 5.0,
-                    }))
-                    .show_inside(ui, |ui| {
-                        ui.label(WidgetText::from("Controls").heading().strong());
+                if self.show_texture_atlas {
+                    Window::new("Texture Atlas")
+                        .open(&mut self.show_texture_atlas)
+                        .collapsible(false)
+                        .show(ui.ctx(), |ui| {
+                            let size @ Vec2 { x, y } = self.texture_atlas.atlas_texture_size();
+                            let max_texture_side = ui.input(|i| i.max_texture_side);
+                            ui.label(format!("Atlas size: {x} x {y} • Max texture side: {max_texture_side}"));
 
-                        let button_text = match self.show_texture_atlas {
-                            true => "Hide Texture Atlas",
-                            false => "Show Texture Atlas"
-                        };
-
-                        if ui.button(button_text).clicked() {
-                            self.show_texture_atlas = !self.show_texture_atlas;
-                        }
-
-                        if self.show_texture_atlas {
-                            Window::new("Texture Atlas")
-                                .open(&mut self.show_texture_atlas)
-                                .collapsible(false)
-                                .show(ui.ctx(), |ui| {
-                                    let size @ Vec2 { x, y } = self.texture_atlas.atlas_texture_size();
-                                    let max_texture_side = ui.input(|i| i.max_texture_side);
-                                    ui.label(format!("Atlas size: {x} x {y} • Max texture side: {max_texture_side}"));
-
-                                    ScrollArea::both()
-                                        .show(ui, |ui| {
-                                            ui.image(
-                                                SizedTexture::new(
-                                                    self.texture_atlas.atlas_texture(),
-                                                    size
-                                                )
-                                            );
-                                        });
+                            ScrollArea::both()
+                                .show(ui, |ui| {
+                                    ui.image(
+                                        SizedTexture::new(
+                                            self.texture_atlas.atlas_texture(),
+                                            size
+                                        )
+                                    );
                                 });
+                        });
+                }
+
+                ui.label("Font Size");
+                Slider::new(&mut self.font_size, 5.0..=150.0)
+                    .ui(ui);
+
+                ui.label("Relative Line Height");
+                Slider::new(&mut self.rel_line_height, 1.0..=3.0)
+                    .ui(ui);
+
+                ui.label("Interactivity");
+
+                let interactivity = self.editor.interactivity_mut();
+
+                ComboBox::from_id_source("interactivity")
+                    .selected_text(format!("{interactivity:?}"))
+                    .show_ui(ui, |ui| {
+                        for (name, variant) in Interactivity::variants() {
+                            ui.selectable_value(interactivity, *variant, &**name);
                         }
-
-                        ui.label("Font Size");
-                        Slider::new(&mut self.font_size, 5.0..=150.0)
-                            .ui(ui);
-
-                        ui.label("Relative Line Height");
-                        Slider::new(&mut self.rel_line_height, 1.0..=3.0)
-                            .ui(ui);
-
-                        ui.label("Interactivity");
-
-                        let interactivity = self.editor.interactivity_mut();
-
-                        ComboBox::from_id_source("interactivity")
-                            .selected_text(format!("{interactivity:?}"))
-                            .show_ui(ui, |ui| {
-                                for (name, variant) in Interactivity::variants() {
-                                    ui.selectable_value(interactivity, *variant, &**name);
-                                }
-                            });
-
-                        ui.label("Hover Strategy");
-
-                        let hover_strategy = self.editor.hover_strategy_mut();
-
-                        ComboBox::from_id_source("hover_strategy")
-                            .selected_text(format!("{hover_strategy:?}"))
-                            .show_ui(ui, |ui| {
-                                for (name, variant) in HoverStrategy::variants() {
-                                    ui.selectable_value(hover_strategy, *variant, &**name);
-                                }
-                            });
-
-                        ui.label("Layout Mode");
-
-                        ComboBox::from_id_source("layout_mode")
-                            .selected_text(format!("{curr_layout_mode:?}"))
-                            .show_ui(ui, |ui| {
-                                    ui.selectable_value(
-                                        &mut curr_layout_mode,
-                                        SelectedLayoutMode::FillWidth,
-                                        "FillWidth"
-                                    ).on_hover_text("Fills the width of the available space. Height is the raw height of the text.");
-                                    ui.selectable_value(
-                                        &mut curr_layout_mode,
-                                        SelectedLayoutMode::FillWidthAndHeight,
-                                        "FillWidthAndHeight"
-                                    ).on_hover_text("Fills the width of the available space. Minimum height will be the available space, if the raw height of the text is higher, it will be raw height of the text.");
-                                    ui.selectable_value(
-                                        &mut curr_layout_mode,
-                                        SelectedLayoutMode::PureBoundingBox,
-                                        "PureBoundingBox"
-                                    ).on_hover_text("Size will be the raw size of the text");
-                                    ui.selectable_value(
-                                        &mut curr_layout_mode,
-                                        SelectedLayoutMode::ShrinkToFit,
-                                        "ShrinkToFit"
-                                    ).on_hover_text("Shrinks to the text's width, caps out at the available width. Height is the raw height of the text.");
-                                })
                     });
 
-                ScrollArea::vertical().show(ui, |ui| {
-                    CommonMarkViewer::new("side_bar")
-                        .alerts(AlertBundle::from_alerts(vec![
-                            // https://github.com/lampsitter/egui_commonmark/blob/707401837f99479021574c5cdfca01e6e00b0a74/src/lib.rs#L272
-                            Alert {
-                                accent_color: Color32::from_rgb(200, 120, 0),
-                                icon: '\u{200b}', // Zero width space
-                                identifier: "WARNING".to_string(),
-                                identifier_rendered: "Warning".to_string(),
-                            }
-                        ]))
-                        .show(
-                            ui,
-                            &mut self.common_mark_cache,
-                            include_str!("../resources/README_mirror.md")
-                        );
-                });
+                ui.label("Hover Strategy");
+
+                let hover_strategy = self.editor.hover_strategy_mut();
+
+                ComboBox::from_id_source("hover_strategy")
+                    .selected_text(format!("{hover_strategy:?}"))
+                    .show_ui(ui, |ui| {
+                        for (name, variant) in HoverStrategy::variants() {
+                            ui.selectable_value(hover_strategy, *variant, &**name);
+                        }
+                    });
+
+                ui.label("Layout Mode");
+
+                ComboBox::from_id_source("layout_mode")
+                    .selected_text(format!("{curr_layout_mode:?}"))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut curr_layout_mode,
+                            SelectedLayoutMode::FillWidth,
+                            "FillWidth"
+                        ).on_hover_text("Fills the width of the available space. Height is the raw height of the text.");
+                        ui.selectable_value(
+                            &mut curr_layout_mode,
+                            SelectedLayoutMode::FillWidthAndHeight,
+                            "FillWidthAndHeight"
+                        ).on_hover_text("Fills the width of the available space. Minimum height will be the available space, if the raw height of the text is higher, it will be raw height of the text.");
+                        ui.selectable_value(
+                            &mut curr_layout_mode,
+                            SelectedLayoutMode::PureBoundingBox,
+                            "PureBoundingBox"
+                        ).on_hover_text("Size will be the raw size of the text");
+                        ui.selectable_value(
+                            &mut curr_layout_mode,
+                            SelectedLayoutMode::ShrinkToFit,
+                            "ShrinkToFit"
+                        ).on_hover_text("Shrinks to the text's width, caps out at the available width. Height is the raw height of the text.");
+                    })
             });
 
         CentralPanel::default()
@@ -324,7 +276,6 @@ fn app_creator() -> AppCreator {
             swash_cache,
             texture_atlas,
             editor,
-            common_mark_cache: CommonMarkCache::default(),
             #[cfg(not(target_arch = "wasm32"))]
             clipboard: Clipboard::new().expect("expected clipboard"),
             font_size: 14.0,
