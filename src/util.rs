@@ -25,10 +25,12 @@ pub fn measure_height(buf: &Buffer) -> f32 {
 /// **This is in physical pixels.**
 pub fn measure_width_and_height(buf: &Buffer) -> (f32, f32) {
     let base_line_height = buf.metrics().line_height;
-    layout_lines_iter(buf)
-        .fold((0.0, 0.0), |(width, height), line| {
-            (line.w.max(width), height + line.line_height_opt.unwrap_or(base_line_height))
-        })
+    layout_lines_iter(buf).fold((0.0, 0.0), |(width, height), line| {
+        (
+            line.w.max(width),
+            height + line.line_height_opt.unwrap_or(base_line_height),
+        )
+    })
 }
 
 /// Attempts to retrieve the cursor's rect from inside the buffer.

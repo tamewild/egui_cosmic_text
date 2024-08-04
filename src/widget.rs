@@ -648,17 +648,18 @@ impl<L: LayoutMode> CosmicEdit<L> {
         let size = self.editor.with_buffer_mut(|x| {
             // egui logical pixel -> physical pixel
             let (available_width, available_height) =
-                (ui.available_size_before_wrap() * pixels_per_point)
-                    .into();
+                (ui.available_size_before_wrap() * pixels_per_point).into();
 
-            let sz = self.layout_mode.calculate(x, font_system, vec2(available_width, available_height));
+            let sz =
+                self.layout_mode
+                    .calculate(x, font_system, vec2(available_width, available_height));
             (sz.x, sz.y)
         });
 
         let (resp, mut painter) = ui.allocate_painter(
             // Size is in physical pixels -> logical pixels
             Vec2::from(size) / pixels_per_point,
-            self.interactivity.sense()
+            self.interactivity.sense(),
         );
 
         let interact_pos = || {
@@ -698,9 +699,10 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 });
 
                 self.change(font_system, |font_system, widget| {
-                    widget
-                        .editor
-                        .action(font_system, click_type.as_action(interact_pos, pixels_per_point));
+                    widget.editor.action(
+                        font_system,
+                        click_type.as_action(interact_pos, pixels_per_point),
+                    );
                 });
 
                 self.dragging = true;
@@ -1082,11 +1084,10 @@ impl<L: LayoutMode> CosmicEdit<L> {
     /// Returns the cursor rect in **logical pixels**
     pub fn cursor_rect(&self, logical_min_pos: Pos2, pixels_per_point: f32) -> Rect {
         let cursor = self.editor.cursor();
-        self.editor
-            .with_buffer(|x| {
-                (cursor_rect(x, cursor).unwrap() / pixels_per_point)
-                    .translate(logical_min_pos.to_vec2())
-            })
+        self.editor.with_buffer(|x| {
+            (cursor_rect(x, cursor).unwrap() / pixels_per_point)
+                .translate(logical_min_pos.to_vec2())
+        })
     }
 
     fn draw_cursor(
@@ -1094,11 +1095,12 @@ impl<L: LayoutMode> CosmicEdit<L> {
         ctx: &egui::Context,
         painter: &mut Painter,
         logical_min_pos: Pos2,
-        pixels_per_point: f32
+        pixels_per_point: f32,
     ) {
         // Probably shouldn't render the cursor if it isn't in view.
         // Shouldn't matter much, it'll be clipped, etc.
-        let cursor_rect = painter.round_rect_to_pixels(self.cursor_rect(logical_min_pos, pixels_per_point));
+        let cursor_rect =
+            painter.round_rect_to_pixels(self.cursor_rect(logical_min_pos, pixels_per_point));
         self.cursor_style
             .with_texture(ctx, self.line_height(), |cursor_texture| {
                 let cursor_texture_id = cursor_texture.texture_id();

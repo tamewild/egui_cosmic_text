@@ -110,19 +110,17 @@ impl GlyphImage {
         // Note: this isn't exactly working
         let tint = match self.colorable {
             true => color_override.unwrap_or(self.default_color),
-            false => Color32::WHITE
+            false => Color32::WHITE,
         };
 
         let pixels_per_point = painter.ctx().pixels_per_point();
 
         painter.image(
             self.atlas_texture_id,
-            Rect::from_min_size(
-                pos2(x as f32, y as f32),
-                vec2(self.width, self.height)
-            ) / pixels_per_point, // Convert from physical -> logical
+            Rect::from_min_size(pos2(x as f32, y as f32), vec2(self.width, self.height))
+                / pixels_per_point, // Convert from physical -> logical
             self.uv_rect,
-            tint
+            tint,
         );
     }
 }

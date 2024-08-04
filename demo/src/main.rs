@@ -3,27 +3,28 @@ use std::sync::Arc;
 
 #[cfg(not(target_arch = "wasm32"))]
 use arboard::Clipboard;
-use eframe::{App, AppCreator};
-use eframe::egui::{
-    CentralPanel, Color32, ComboBox, Context, FontData, FontDefinitions
-    , Frame, Margin, ScrollArea, SidePanel, Slider, TopBottomPanel,
-    Vec2, Widget, WidgetText, Window,
-};
 use eframe::egui::load::SizedTexture;
 use eframe::egui::style::ScrollStyle;
+use eframe::egui::{
+    CentralPanel, Color32, ComboBox, Context, FontData, FontDefinitions, Frame, Margin, ScrollArea,
+    SidePanel, Slider, TopBottomPanel, Vec2, Widget, WidgetText, Window,
+};
 use eframe::epaint::FontFamily;
 #[cfg(not(target_arch = "wasm32"))]
 use eframe::NativeOptions;
 #[cfg(target_arch = "wasm32")]
 use eframe::WebOptions;
+use eframe::{App, AppCreator};
 #[cfg(target_arch = "wasm32")]
 use log::LevelFilter;
 use rustc_hash::FxHasher;
 
 use egui_cosmic_text::atlas::TextureAtlas;
 use egui_cosmic_text::cosmic_text;
-use egui_cosmic_text::cosmic_text::{Attrs, Family, FontSystem, Metrics, Shaping, SwashCache, Weight};
 use egui_cosmic_text::cosmic_text::fontdb::Source;
+use egui_cosmic_text::cosmic_text::{
+    Attrs, Family, FontSystem, Metrics, Shaping, SwashCache, Weight,
+};
 use egui_cosmic_text::widget::{
     CosmicEdit, DefaultContextMenu, FillWidth, FillWidthAndHeight, HoverStrategy, Interactivity,
     LayoutMode, LineHeight, PureBoundingBox, ShrinkToFit,
@@ -168,24 +169,22 @@ impl App for DemoApp {
                     })
             });
 
-
-        TopBottomPanel::bottom("bottom")
-            .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    self.bottom_text.ui(
-                        ui,
-                        &mut self.font_system,
-                        &mut self.swash_cache,
-                        &mut self.texture_atlas,
-                        DefaultContextMenu {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            read_clipboard_text: || self.clipboard.get_text().ok(),
-                            #[cfg(target_arch = "wasm32")]
-                            read_clipboard_text: || None,
-                        }
-                    )
-                });
+        TopBottomPanel::bottom("bottom").show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                self.bottom_text.ui(
+                    ui,
+                    &mut self.font_system,
+                    &mut self.swash_cache,
+                    &mut self.texture_atlas,
+                    DefaultContextMenu {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        read_clipboard_text: || self.clipboard.get_text().ok(),
+                        #[cfg(target_arch = "wasm32")]
+                        read_clipboard_text: || None,
+                    },
+                )
             });
+        });
 
         CentralPanel::default()
             .frame(
@@ -297,7 +296,7 @@ fn app_creator() -> AppCreator {
             Interactivity::Selection,
             HoverStrategy::BoundingBox,
             PureBoundingBox::default(),
-            &mut font_system
+            &mut font_system,
         );
 
         bottom_text.set_text(
@@ -305,14 +304,15 @@ fn app_creator() -> AppCreator {
                 ("You can also use it as a label! Try ", attrs),
                 (
                     "selecting this ",
-                    attrs.metrics(Metrics::new(20.0, 20.0 * 1.5))
-                        .color(cosmic_text::Color::rgb(137, 207, 240))
+                    attrs
+                        .metrics(Metrics::new(20.0, 20.0 * 1.5))
+                        .color(cosmic_text::Color::rgb(137, 207, 240)),
                 ),
-                ("text!", attrs)
+                ("text!", attrs),
             ],
             attrs,
             Shaping::Advanced,
-            &mut font_system
+            &mut font_system,
         );
 
         Ok(Box::new(DemoApp {
@@ -334,10 +334,14 @@ fn app_creator() -> AppCreator {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    eframe::run_native("demo", NativeOptions {
-        follow_system_theme: false,
-        ..Default::default()
-    }, app_creator())
+    eframe::run_native(
+        "demo",
+        NativeOptions {
+            follow_system_theme: false,
+            ..Default::default()
+        },
+        app_creator(),
+    )
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -346,10 +350,14 @@ fn main() {
 
     wasm_bindgen_futures::spawn_local(async move {
         let start_result = eframe::WebRunner::new()
-            .start("the_canvas_id", WebOptions {
-                follow_system_theme: false,
-                ..Default::default()
-            }, app_creator())
+            .start(
+                "the_canvas_id",
+                WebOptions {
+                    follow_system_theme: false,
+                    ..Default::default()
+                },
+                app_creator(),
+            )
             .await;
 
         // Remove the loading text and spinner:

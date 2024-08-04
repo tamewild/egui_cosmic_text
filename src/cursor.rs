@@ -1,5 +1,5 @@
 use cosmic_text::{Affinity, Buffer, Cursor, LayoutLine, LayoutRun};
-use egui::{pos2, Rect, vec2};
+use egui::{pos2, vec2, Rect};
 
 // There's an issue here where if the first line is only spaces, it can get to a certain point where the cursor is invalid.
 // I believe this happens in cosmic-edit too so it might be a cosmic-text bug.
@@ -19,14 +19,16 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
         .sum();
 
     if cursor.index == 0 {
-        let line_height = buf.lines.get(cursor.line)
+        let line_height = buf
+            .lines
+            .get(cursor.line)
             .and_then(|x| x.layout_opt().as_ref())
             .and_then(|x| x.first())
             .map(|x| x.line_height_opt.unwrap_or(base_line_height))?;
 
         return Some(Rect::from_min_size(
             pos2(0.0, height_before_cursor_line),
-            vec2(1.0, line_height)
+            vec2(1.0, line_height),
         ));
     }
 
@@ -57,7 +59,7 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
             return last_line.map(|(line, line_top)| {
                 Rect::from_min_size(
                     pos2(line.w, line_top),
-                    vec2(1.0, line.line_height_opt.unwrap_or(base_line_height))
+                    vec2(1.0, line.line_height_opt.unwrap_or(base_line_height)),
                 )
             });
         } else if is_cursor_before_end {
@@ -69,7 +71,7 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
                 .sum();
             return Some(Rect::from_min_size(
                 pos2(offset, line_top),
-                vec2(1.0, layout_line.line_height_opt.unwrap_or(base_line_height))
+                vec2(1.0, layout_line.line_height_opt.unwrap_or(base_line_height)),
             ));
         }
 
@@ -85,8 +87,8 @@ pub fn cursor_pos(buf: &Buffer, cursor: Cursor) -> Option<Rect> {
             let (line, line_top) = last_line?;
             return Some(Rect::from_min_size(
                 pos2(last_glyph.x + last_glyph.w, line_top),
-                vec2(1.0, line.line_height_opt.unwrap_or(base_line_height))
-            ))
+                vec2(1.0, line.line_height_opt.unwrap_or(base_line_height)),
+            ));
         }
     }
 
@@ -97,15 +99,15 @@ fn end_cursor(run: &LayoutRun) -> Option<Cursor> {
     match run.rtl {
         true => {
             // |..
-            run.glyphs.first().map(|glyph| {
-                Cursor::new_with_affinity(run.line_i, glyph.start, Affinity::After)
-            })
+            run.glyphs
+                .first()
+                .map(|glyph| Cursor::new_with_affinity(run.line_i, glyph.start, Affinity::After))
         }
         false => {
             // ..|
-            run.glyphs.last().map(|glyph| {
-                Cursor::new_with_affinity(run.line_i, glyph.end, Affinity::Before)
-            })
+            run.glyphs
+                .last()
+                .map(|glyph| Cursor::new_with_affinity(run.line_i, glyph.end, Affinity::Before))
         }
     }
 }
@@ -127,8 +129,7 @@ impl LineSelection {
                 // it's within the selection.
                 // Affinity messes up with 0 indexes sometimes
                 let buffer_line_range = start.line..=end.line;
-                if run.glyphs.is_empty() && buffer_line_range.contains(&run.line_i)
-                {
+                if run.glyphs.is_empty() && buffer_line_range.contains(&run.line_i) {
                     (0.0, 0.0).into()
                 } else {
                     None
@@ -137,7 +138,7 @@ impl LineSelection {
             .map(|(x_left, x_width)| {
                 let end_of_line_included = match end_cursor(run) {
                     None => true,
-                    Some(end_cursor) => end_cursor <= end
+                    Some(end_cursor) => end_cursor <= end,
                 };
                 LineSelection {
                     x_left,

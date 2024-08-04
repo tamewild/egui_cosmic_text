@@ -31,13 +31,12 @@ pub fn draw_buf<H>(
 
     let visible_y_range = clip_rect.y_range();
 
-    let line_y_range =
-        |run: &LayoutRun| {
-            Rangef::new(
-                min_pos.y + (run.line_top / pixels_per_point),
-                min_pos.y + ((run.line_top + run.line_height) / pixels_per_point)
-            )
-        };
+    let line_y_range = |run: &LayoutRun| {
+        Rangef::new(
+            min_pos.y + (run.line_top / pixels_per_point),
+            min_pos.y + ((run.line_top + run.line_height) / pixels_per_point),
+        )
+    };
 
     let selection_end_cursor_rect = selection_end
         .and_then(|x| cursor_rect(buf, x))
