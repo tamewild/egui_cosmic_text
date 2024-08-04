@@ -21,7 +21,6 @@ If you don't want to use the widget feature, you can use the library to draw tex
 #### Widget Features
 - Colored emojis
 - Faster editing of large text compared to the default egui widget (thanks to `cosmic-text`)
-- Blinking cursor
 - Configurable single widget text selection
 - Configurable context menu (copy, paste, cut, etc)
 
