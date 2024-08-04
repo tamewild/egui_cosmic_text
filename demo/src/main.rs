@@ -21,6 +21,7 @@ use log::LevelFilter;
 use rustc_hash::FxHasher;
 
 use egui_cosmic_text::atlas::TextureAtlas;
+use egui_cosmic_text::cosmic_text;
 use egui_cosmic_text::cosmic_text::{Attrs, Family, FontSystem, Metrics, Shaping, SwashCache, Weight};
 use egui_cosmic_text::cosmic_text::fontdb::Source;
 use egui_cosmic_text::widget::{
@@ -53,6 +54,7 @@ struct DemoApp {
     swash_cache: SwashCache,
     texture_atlas: TextureAtlas<BuildHasherDefault<FxHasher>>,
     editor: CosmicEdit<Box<dyn LayoutMode>>,
+    bottom_text: CosmicEdit<PureBoundingBox>,
     #[cfg(not(target_arch = "wasm32"))]
     clipboard: Clipboard,
     font_size: f32,
@@ -166,6 +168,25 @@ impl App for DemoApp {
                     })
             });
 
+
+        TopBottomPanel::bottom("bottom")
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    self.bottom_text.ui(
+                        ui,
+                        &mut self.font_system,
+                        &mut self.swash_cache,
+                        &mut self.texture_atlas,
+                        DefaultContextMenu {
+                            #[cfg(not(target_arch = "wasm32"))]
+                            read_clipboard_text: || self.clipboard.get_text().ok(),
+                            #[cfg(target_arch = "wasm32")]
+                            read_clipboard_text: || None,
+                        }
+                    )
+                });
+            });
+
         CentralPanel::default()
             .frame(
                 Frame::none()
@@ -263,7 +284,6 @@ fn app_creator() -> AppCreator {
             .weight(Weight::LIGHT);
         editor.set_text(
             [
-                ("egui_cosmic_text 0.2.0\n", attrs.metrics(Metrics::new(28.0, 14.0 * 3.0))),
                 ("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs)
             ],
             attrs,
@@ -271,11 +291,36 @@ fn app_creator() -> AppCreator {
             &mut font_system,
         );
 
+        let mut bottom_text = CosmicEdit::new(
+            14.0,
+            LineHeight::Relative(1.5),
+            Interactivity::Selection,
+            HoverStrategy::BoundingBox,
+            PureBoundingBox::default(),
+            &mut font_system
+        );
+
+        bottom_text.set_text(
+            [
+                ("You can also use it as a label! Try ", attrs),
+                (
+                    "selecting this ",
+                    attrs.metrics(Metrics::new(20.0, 20.0 * 1.5))
+                        .color(cosmic_text::Color::rgb(137, 207, 240))
+                ),
+                ("text!", attrs)
+            ],
+            attrs,
+            Shaping::Advanced,
+            &mut font_system
+        );
+
         Ok(Box::new(DemoApp {
             font_system,
             swash_cache,
             texture_atlas,
             editor,
+            bottom_text,
             #[cfg(not(target_arch = "wasm32"))]
             clipboard: Clipboard::new().expect("expected clipboard"),
             font_size: 14.0,
