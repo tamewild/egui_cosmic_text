@@ -283,7 +283,9 @@ fn app_creator() -> AppCreator {
             .weight(Weight::LIGHT);
         editor.set_text(
             [
-                ("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs)
+                ("This text is editable!\n\n🦀🦀🦀🦀🚀🚀🚀🚀\n\nThese emojis come from the Twitter Emoji project", attrs),
+                #[cfg(target_arch = "wasm32")]
+                ("\n\nNote: Pasting via context menu isn't supported in this WASM demo.", attrs)
             ],
             attrs,
             Shaping::Advanced,
@@ -308,9 +310,7 @@ fn app_creator() -> AppCreator {
                         .metrics(Metrics::new(20.0, 20.0 * 1.5))
                         .color(cosmic_text::Color::rgb(137, 207, 240)),
                 ),
-                ("text!", attrs),
-                #[cfg(target_arch = "wasm32")]
-                (" Pasting via context menu isn't supported in this WASM demo.", attrs)
+                ("text!", attrs)
             ],
             attrs,
             Shaping::Advanced,
