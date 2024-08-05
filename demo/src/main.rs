@@ -309,6 +309,8 @@ fn app_creator() -> AppCreator {
                         .color(cosmic_text::Color::rgb(137, 207, 240)),
                 ),
                 ("text!", attrs),
+                #[cfg(target_arch = "wasm32")]
+                (" Pasting via context menu isn't supported in this WASM demo.", attrs)
             ],
             attrs,
             Shaping::Advanced,
