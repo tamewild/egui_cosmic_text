@@ -1,5 +1,5 @@
 use std::hash::BuildHasher;
-
+use std::time::Duration;
 use cosmic_text::{
     Action, Attrs, Buffer, Change, Cursor, Edit, Editor, FontSystem, LayoutGlyph, Metrics, Motion,
     Selection, Shaping, SwashCache,
@@ -546,10 +546,13 @@ pub struct CosmicEdit<L: LayoutMode> {
     scroll_state: ScrollState,
     dragging: bool,
     frame_changed: bool,
+    last_updated_time: f64
 }
 
 // TODO: Docs
 impl<L: LayoutMode> CosmicEdit<L> {
+    const BLINK_INTERVAL_IN_SECS: f32 = 0.5;
+
     pub fn new(
         font_size: f32,
         line_height: LineHeight,
@@ -577,6 +580,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             scroll_state: ScrollState::Idle,
             dragging: false,
             frame_changed: false,
+            last_updated_time: 0.0,
         }
     }
 
@@ -598,6 +602,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             scroll_state: ScrollState::Idle,
             dragging: false,
             frame_changed: false,
+            last_updated_time: 0.0,
         }
     }
 
@@ -935,7 +940,31 @@ impl<L: LayoutMode> CosmicEdit<L> {
         });
 
         if self.interactivity.input() && resp.has_focus() {
-            self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
+            // https://github.com/emilk/egui/blob/9a1e358a144b5d2af9d03a80257c34883f57cf0b/crates/egui/src/widgets/text_edit/builder.rs#L715
+            let now = ui.ctx().input(|i| i.time);
+
+            if self.frame_changed {
+                self.last_updated_time = now;
+            }
+
+            let time_since_last_update = now - self.last_updated_time;
+
+            // 0.0..=0.5 (on), 0.5..=1.0 (off)
+            // just so i dont forget about how this works
+            let total_duration = Self::BLINK_INTERVAL_IN_SECS * 2.0;
+
+            // value is within 0.0..=1.0
+            let time_in_cycle = (time_since_last_update % total_duration as f64) as f32;
+
+            let delay = if time_in_cycle <= 0.5 {
+                self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
+
+                Self::BLINK_INTERVAL_IN_SECS - time_in_cycle
+            } else {
+                total_duration - time_in_cycle
+            };
+
+            ui.ctx().request_repaint_after_secs(delay)
         }
 
         resp
