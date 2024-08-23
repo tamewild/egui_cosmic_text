@@ -204,7 +204,7 @@ impl<S: BuildHasher + Default> TextureAtlas<S> {
     fn alloc_packer(&mut self, width: u32, height: u32) -> Option<Allocation> {
         let size = size2(width as i32, height as i32);
         // Will keep freeing up unused glyphs until it can be allocated or
-        // until we know that we are truly ran out of space and need to grow the atlas
+        // until we know that we truly ran out of space and need to grow the atlas
         loop {
             let allocation = self.packer.allocate(size);
             if allocation.is_some() {
