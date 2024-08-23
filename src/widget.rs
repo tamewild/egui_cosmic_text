@@ -1,5 +1,4 @@
 use std::hash::BuildHasher;
-use std::time::Duration;
 use cosmic_text::{
     Action, Attrs, Buffer, Change, Cursor, Edit, Editor, FontSystem, LayoutGlyph, Metrics, Motion,
     Selection, Shaping, SwashCache,
@@ -710,6 +709,8 @@ impl<L: LayoutMode> CosmicEdit<L> {
                     );
                 });
 
+                self.last_updated_time = curr_time;
+
                 self.dragging = true;
             } else if self.dragging && resp.has_focus() && resp.hovered() {
                 let interact_pos = interact_pos().unwrap();
@@ -732,6 +733,8 @@ impl<L: LayoutMode> CosmicEdit<L> {
                             },
                         );
                     });
+
+                    self.last_updated_time = ui.ctx().input(|i| i.time);
                 }
             }
         }
@@ -812,6 +815,8 @@ impl<L: LayoutMode> CosmicEdit<L> {
                                     widget.invalidate_layout();
                                 } else {
                                     if let Action::Motion(_) = action {
+                                        widget.last_updated_time = ui.input(|i| i.time);
+
                                         match widget.editor.selection() {
                                             Selection::None if modifiers.shift => {
                                                 widget.editor.set_selection(Selection::Normal(
@@ -956,7 +961,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             // value is within 0.0..=1.0
             let time_in_cycle = (time_since_last_update % total_duration as f64) as f32;
 
-            let delay = if time_in_cycle <= 0.5 {
+            let time_till_flip = if time_in_cycle <= Self::BLINK_INTERVAL_IN_SECS {
                 self.draw_cursor(ui.ctx(), &mut painter, resp.rect.min, pixels_per_point);
 
                 Self::BLINK_INTERVAL_IN_SECS - time_in_cycle
@@ -964,7 +969,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
                 total_duration - time_in_cycle
             };
 
-            ui.ctx().request_repaint_after_secs(delay)
+            ui.ctx().request_repaint_after_secs(time_till_flip)
         }
 
         resp
