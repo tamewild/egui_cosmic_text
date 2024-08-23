@@ -944,7 +944,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             )
         });
 
-        if self.interactivity.input() && resp.has_focus() {
+        if self.interactivity.input() && resp.has_focus() && selection_bounds.is_none() {
             // https://github.com/emilk/egui/blob/9a1e358a144b5d2af9d03a80257c34883f57cf0b/crates/egui/src/widgets/text_edit/builder.rs#L715
             let now = ui.ctx().input(|i| i.time);
 
