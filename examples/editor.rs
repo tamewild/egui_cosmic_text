@@ -58,20 +58,24 @@ fn main() -> eframe::Result<()> {
 
     let mut clipboard = Clipboard::new().ok();
 
-    let mut frame_times = History::<()>::new(0..300, 1.0);
+    let mut frame_times = History::new(1..100, 0.5);
 
     let mut font_size = 14.0;
 
-    eframe::run_simple_native("", NativeOptions::default(), move |ctx, _| {
-        frame_times.add(ctx.input(|i| i.time), ());
+    eframe::run_simple_native("", NativeOptions::default(), move |ctx, frame| {
+        if let Some(secs) = frame.info().cpu_usage {
+            frame_times.add(ctx.input(|i| i.time), secs);
+        }
 
         let atlas = atlas.get_or_insert_with(|| TextureAtlas::new(ctx.clone(), Color32::WHITE));
 
         CentralPanel::default().show(ctx, |ui| {
-            ui.label(format!(
-                "FPS: {}",
-                1.0 / frame_times.mean_time_interval().unwrap_or_default()
-            ));
+            if let Some(frame_time) = frame_times.average() {
+                ui.monospace(format!(
+                    "{:.2} ms",
+                    frame_time * 1000.0
+                ));
+            }
             ui.add(Slider::new(&mut font_size, 10.0..=200.0).text("Font size"));
             ui.label("This is a native egui label 👋👋👋");
             ui.text_edit_singleline(&mut egui_text_edit);
