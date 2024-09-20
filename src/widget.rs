@@ -463,6 +463,7 @@ impl<F: FnOnce() -> Option<String>> ContextMenu for DefaultContextMenu<F> {
         editor: &mut CosmicEdit<L>,
         font_system: &mut FontSystem,
     ) -> EditorActions {
+        ui.set_min_width(100.0);
         let mut scroll_to_cursor = false;
         let mut focus = false;
         let input = editor.interactivity().input();
