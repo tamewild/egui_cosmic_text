@@ -871,30 +871,34 @@ impl<L: LayoutMode> CosmicEdit<L> {
         self.editor.shape_as_needed(font_system, false);
 
         if should_scroll_to_cursor {
-            ui.scroll_to_rect(self.cursor_rect(resp.rect.min, pixels_per_point), None);
-            self.scroll_state = ScrollState::Scrolling;
+            self.apply_to_cursor_rect(resp.rect.min, pixels_per_point, |editor, cursor| {
+                ui.scroll_to_rect(cursor, None);
+                editor.scroll_state = ScrollState::Scrolling;
+            });
         } else if let ScrollState::Scrolling = self.scroll_state {
-            let rect = self.cursor_rect(resp.rect.min, pixels_per_point);
-            // This can be borked if the cursor is larger than the view, infinitely scrolling to
-            // the cursor even though it's visible, though not completely.
-            if ui.clip_rect().contains_rect(rect) {
-                // Sometimes the clip rect can change in the next frame, probably due to how the scroll area and a frame container works.
-                // E.g: { label, frame { scroll area { this widget } } }
-                // This is a hack so lmk if you encounter any issues
-                self.scroll_state = ScrollState::FinishedLastFrame
-            } else {
-                ui.scroll_to_rect(rect, None);
-            }
+            self.apply_to_cursor_rect(resp.rect.min, pixels_per_point, |editor, rect| {
+                // This can be borked if the cursor is larger than the view, infinitely scrolling to
+                // the cursor even though it's visible, though not completely.
+                if ui.clip_rect().contains_rect(rect) {
+                    // Sometimes the clip rect can change in the next frame, probably due to how the scroll area and a frame container works.
+                    // E.g: { label, frame { scroll area { this widget } } }
+                    // This is a hack so lmk if you encounter any issues
+                    editor.scroll_state = ScrollState::FinishedLastFrame
+                } else {
+                    ui.scroll_to_rect(rect, None);
+                }
+            });
         } else if let ScrollState::FinishedLastFrame = self.scroll_state {
             match resp.has_focus() {
                 true => {
-                    let rect = self.cursor_rect(resp.rect.min, pixels_per_point);
-                    if ui.clip_rect().contains_rect(rect) {
-                        self.scroll_state = ScrollState::Idle
-                    } else {
-                        ui.scroll_to_rect(rect, None);
-                        self.scroll_state = ScrollState::Scrolling;
-                    }
+                    self.apply_to_cursor_rect(resp.rect.min, pixels_per_point, |editor, rect| {
+                        if ui.clip_rect().contains_rect(rect) {
+                            editor.scroll_state = ScrollState::Idle
+                        } else {
+                            ui.scroll_to_rect(rect, None);
+                            editor.scroll_state = ScrollState::Scrolling;
+                        }
+                    });
                 }
                 false => self.scroll_state = ScrollState::Idle,
             }
@@ -1124,6 +1128,25 @@ impl<L: LayoutMode> CosmicEdit<L> {
         })
     }
 
+    fn apply_to_cursor_rect(
+        &mut self,
+        logical_min_pos: Pos2,
+        pixels_per_point: f32,
+        f: impl FnOnce(&mut Self, Rect)
+    ) {
+        let cursor = self.editor.cursor();
+        let cursor_rect = self.editor.with_buffer(|x| {
+            cursor_rect(x, cursor)
+        });
+
+        if let Some(cursor_rect) = cursor_rect {
+            let cursor_rect = (cursor_rect / pixels_per_point)
+                .translate(logical_min_pos.to_vec2());
+
+            f(self, cursor_rect)
+        }
+    }
+
     fn draw_cursor(
         &mut self,
         ctx: &egui::Context,
@@ -1131,19 +1154,20 @@ impl<L: LayoutMode> CosmicEdit<L> {
         logical_min_pos: Pos2,
         pixels_per_point: f32,
     ) {
-        // Probably shouldn't render the cursor if it isn't in view.
-        // Shouldn't matter much, it'll be clipped, etc.
-        let cursor_rect =
-            painter.round_rect_to_pixels(self.cursor_rect(logical_min_pos, pixels_per_point));
-        self.cursor_style
-            .with_texture(ctx, self.line_height(), |cursor_texture| {
-                let cursor_texture_id = cursor_texture.texture_id();
-                painter.image(
-                    cursor_texture_id,
-                    cursor_rect,
-                    Rect::from_two_pos(Pos2::ZERO, pos2(1.0, 1.0)),
-                    Color32::WHITE,
-                );
-            });
+        self.apply_to_cursor_rect(logical_min_pos, pixels_per_point, |editor, cursor_rect| {
+            // Probably shouldn't render the cursor if it isn't in view.
+            // Shouldn't matter much, it'll be clipped, etc.
+            let cursor_rect = painter.round_rect_to_pixels(cursor_rect);
+            editor.cursor_style
+                .with_texture(ctx, editor.line_height(), |cursor_texture| {
+                    let cursor_texture_id = cursor_texture.texture_id();
+                    painter.image(
+                        cursor_texture_id,
+                        cursor_rect,
+                        Rect::from_two_pos(Pos2::ZERO, pos2(1.0, 1.0)),
+                        Color32::WHITE,
+                    );
+                });
+        });
     }
 }
