@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eframe = { version = "0.28.1", default-features = false, features = ["glow", "wayland", "x11"] } # Accessibility isn't supported right now.
+eframe = { version = "0.31", default-features = false, features = ["glow", "wayland", "x11"] } # Accessibility isn't supported right now.
 egui_cosmic_text = { path = "..", features = ["shape-run-cache"] }
 rustc-hash = "2.0.0"
 fontdb = { version = "0.16.2", default-features = false }
