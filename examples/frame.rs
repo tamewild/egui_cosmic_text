@@ -31,7 +31,7 @@ fn main() -> eframe::Result<()> {
             ui.label("Label");
 
             Frame::canvas(ui.style())
-                .inner_margin(Margin::same(5.0))
+                .inner_margin(Margin::same(5))
                 .show(ui, |ui| {
                     ScrollArea::vertical().show(ui, |ui| {
                         ui.centered_and_justified(|ui| {

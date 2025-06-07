@@ -4,6 +4,7 @@ use cosmic_text::{
     Selection, Shaping, SwashCache,
 };
 use cosmic_undo_2::{ActionIter, Commands};
+use egui::emath::GuiRounding;
 use egui::{
     pos2, vec2, Color32, ColorImage, CursorIcon, Event, EventFilter, Key, NumExt, Painter, Pos2,
     Rect, Response, Sense, TextureHandle, TextureId, TextureOptions, Ui, Vec2,
@@ -1031,7 +1032,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
             return false;
         }
         if let Some(string) = self.editor.copy_selection() {
-            ui.output_mut(|x| x.copied_text = string);
+            ui.ctx().copy_text(string);
             return true;
         }
         false
@@ -1158,7 +1159,7 @@ impl<L: LayoutMode> CosmicEdit<L> {
         self.apply_to_cursor_rect(logical_min_pos, pixels_per_point, |editor, cursor_rect| {
             // Probably shouldn't render the cursor if it isn't in view.
             // Shouldn't matter much, it'll be clipped, etc.
-            let cursor_rect = painter.round_rect_to_pixels(cursor_rect);
+            let cursor_rect = cursor_rect.round_to_pixels(painter.pixels_per_point());
             editor.cursor_style
                 .with_texture(ctx, editor.line_height(), |cursor_texture| {
                     let cursor_texture_id = cursor_texture.texture_id();

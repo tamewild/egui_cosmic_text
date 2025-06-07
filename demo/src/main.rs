@@ -121,7 +121,7 @@ impl App for DemoApp {
 
                 let interactivity = self.editor.interactivity_mut();
 
-                ComboBox::from_id_source("interactivity")
+                ComboBox::from_id_salt("interactivity")
                     .selected_text(format!("{interactivity:?}"))
                     .show_ui(ui, |ui| {
                         for (name, variant) in Interactivity::variants() {
@@ -133,7 +133,7 @@ impl App for DemoApp {
 
                 let hover_strategy = self.editor.hover_strategy_mut();
 
-                ComboBox::from_id_source("hover_strategy")
+                ComboBox::from_id_salt("hover_strategy")
                     .selected_text(format!("{hover_strategy:?}"))
                     .show_ui(ui, |ui| {
                         for (name, variant) in HoverStrategy::variants() {
@@ -143,7 +143,7 @@ impl App for DemoApp {
 
                 ui.label("Layout Mode");
 
-                ComboBox::from_id_source("layout_mode")
+                ComboBox::from_id_salt("layout_mode")
                     .selected_text(format!("{curr_layout_mode:?}"))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(
@@ -188,16 +188,16 @@ impl App for DemoApp {
 
         CentralPanel::default()
             .frame(
-                Frame::none()
+                Frame::NONE
                     .fill(Color32::BLACK)
-                    .inner_margin(Margin::same(5.0)),
+                    .inner_margin(Margin::same(5)),
             )
             .show(ctx, |ui| {
                 ui.spacing_mut().scroll = ScrollStyle::solid();
 
                 ScrollArea::vertical().show(ui, |ui| {
                     Frame::side_top_panel(ui.style())
-                        .inner_margin(Margin::same(5.0))
+                        .inner_margin(Margin::same(5))
                         .show(ui, |ui| {
                             self.editor.set_font_size(
                                 self.font_size,
@@ -232,7 +232,7 @@ impl App for DemoApp {
     }
 }
 
-fn app_creator() -> AppCreator {
+fn app_creator() -> AppCreator<'static> {
     let mut font_db = fontdb::Database::new();
 
     let font_file = include_bytes!("../resources/Ubuntu-Light.ttf");
@@ -248,9 +248,10 @@ fn app_creator() -> AppCreator {
 
     let mut font_definitions = FontDefinitions::default();
 
-    font_definitions
-        .font_data
-        .insert("Ubuntu-Light".to_string(), FontData::from_static(font_file));
+    font_definitions.font_data.insert(
+        "Ubuntu-Light".to_string(),
+        Arc::new(FontData::from_static(font_file)),
+    );
 
     font_definitions
         .families
@@ -310,7 +311,7 @@ fn app_creator() -> AppCreator {
                         .metrics(Metrics::new(20.0, 20.0 * 1.5))
                         .color(cosmic_text::Color::rgb(137, 207, 240)),
                 ),
-                ("text!", attrs)
+                ("text!", attrs),
             ],
             attrs,
             Shaping::Advanced,
@@ -339,7 +340,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "demo",
         NativeOptions {
-            follow_system_theme: false,
             ..Default::default()
         },
         app_creator(),
